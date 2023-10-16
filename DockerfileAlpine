@@ -1,0 +1,16 @@
+FROM alpine:3.18 AS builder
+#RUN apk add --no-cache --virtual autoconf automake build-essential git libcurl4-openssl-dev libev-dev libpthread-stubs0-dev pkg-config
+RUN apk add --no-cache  autoconf automake build-base pkgconfig curl-dev libev-dev
+WORKDIR /build
+COPY . .
+RUN ./scripts/bootstrap
+RUN ./configure
+RUN make all
+
+FROM alpine:3.18
+RUN apk add --no-cache  curl libev
+ENV URL http://localhost
+COPY --from=builder /build/src/spoa-mirror /spoa-mirror
+STOPSIGNAL SIGTERM
+ENTRYPOINT /spoa-mirror -r0 -u ${URL}
+
